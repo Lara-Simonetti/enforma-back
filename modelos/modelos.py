@@ -44,9 +44,10 @@ class Entrenamiento(db.Model):
     tiempo = db.Column(db.Time)
     repeticiones = db.Column(db.Numeric)
     fecha = db.Column(db.Date)
+    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
     ejercicio = db.Column(db.Integer, db.ForeignKey('ejercicio.id'))
     persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
-    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
+    
 
 class Rutina(db.Model):
     id = db.Column(db.Integer, primary_key=True)
