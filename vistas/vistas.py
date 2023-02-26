@@ -136,17 +136,35 @@ class VistaRutinas(Resource):
     def get(self):
         rutinas = Rutina.query.all()
         return [rutina_schema.dump(rutina) for rutina in rutinas]
+    
     @jwt_required()
     def post(self):
         nueva_rutina = Rutina( \
             nombre = request.json["nombre"], \
             descripcion = request.json["descripcion"], \
-            duracion_minutos = float(request.json["duracion_minutos"]),
-        )
+            duracion_minutos = float(request.json["duracion_minutos"])
+            )
         db.session.add(nueva_rutina)
         db.session.commit()
         return rutina_schema.dump(nueva_rutina)
     
+
+class VistaRutina(Resource):
+    @jwt_required()
+    def get(self, id_rutina):
+        return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+        
+    @jwt_required()
+    def put(self, id_rutina):
+        rutina = Rutina.query.get_or_404(id_rutina)
+        rutina.nombre = request.json["nombre"]
+        rutina.descripcion = request.json["descripcion"]
+        rutina.duracion_minutos = float(request.json["duracion_minutos"])
+        rutina.entrenamientos = request.json["entrenamientos"]
+        rutina.ejercicioRutina = request.json["ejercicioRutina"]
+        db.session.commit()
+        return ejercicio_schema.dump(rutina)
+
 class VistaEjercicios(Resource):
     @jwt_required()
     def get(self):
@@ -164,6 +182,8 @@ class VistaEjercicios(Resource):
         db.session.add(nuevo_ejercicio)
         db.session.commit()
         return ejercicio_schema.dump(nuevo_ejercicio)
+
+
 
 
 class VistaEjercicio(Resource):

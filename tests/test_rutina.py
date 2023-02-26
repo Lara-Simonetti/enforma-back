@@ -105,13 +105,23 @@ class TestRutinaTestCase(TestCase):
             "video": video_ejercicio,
             "calorias": calorias_ejercicio
         }  
+        
+        #Agregar ejercicio
+        endpoint_ejercicios = "/ejercicios"
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_nuevo_ejercicio = self.client.post(endpoint_ejercicios,
+                                                   data=json.dumps(nuevo_ejercicio),
+                                                   headers=headers)
+        
+        datos_ejercicio= json.loads(resultado_nuevo_ejercicio.get_data())
 
         #Crear el json con la rutina a crear
         nueva_rutina = {
             "nombre": nombre_nueva_rutina,
             "descripcion": descripcion_nueva_rutina,
             "duracion_minutos": minutos_nueva_rutina,
-            "ejercicio_rutina":nuevo_ejercicio
+            "ejercicioRutina": json.dumps(nuevo_ejercicio)
         }
         
         #Definir endpoint, encabezados y hacer el llamado

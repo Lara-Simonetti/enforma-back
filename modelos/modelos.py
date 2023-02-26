@@ -4,6 +4,10 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 db = SQLAlchemy()
 
+EjercicioRutina = db.Table("EjercicioRutina",\
+    db.Column("rutina_id", db.Integer, db.ForeignKey('rutina.id'), primary_key = True),\
+    db.Column("ejercicio_id", db.Integer, db.ForeignKey('ejercicio.id'), primary_key = True))
+
 class Ejercicio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(128))
@@ -11,7 +15,7 @@ class Ejercicio(db.Model):
     video = db.Column(db.String(512))
     calorias = db.Column(db.Numeric)
     entrenamientos = db.relationship('Entrenamiento')
-    ejercicioRutinas = db.relationship('EjercicioRutina')
+    rutinas = db.relationship('Rutina', secondary='EjercicioRutina', back_populates="ejercicioRutina")
 
 class Persona(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -55,16 +59,7 @@ class Rutina(db.Model):
     descripcion = db.Column(db.String(250))
     duracion_minutos = db.Column(db.String(250))
     entrenamientos = db.relationship('Entrenamiento')
-    ejercicioRutina = db.relationship('EjercicioRutina')
-
-
-class EjercicioRutina(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    duracion_minutos = db.Column(db.String(50))
-    repeticiones = db.Column(db.String(250))
-    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
-    ejercicio = db.Column(db.Integer, db.ForeignKey('ejercicio.id'))
-
+    ejercicioRutina = db.relationship('Ejercicio', secondary='EjercicioRutina', back_populates="rutinas")
 
 class EjercicioSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -111,18 +106,7 @@ class RutinaSchema(SQLAlchemyAutoSchema):
     nombre = fields.String()
     descripcion = fields.String()
     duracion_minutos = fields.String()
-
-
-class EjercicioRutinaSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = EjercicioRutina
-        include_fk = True
-        include_relationships = True
-        load_instance = True
-        
-    id = fields.String()
-    duracion_minutos = fields.String()
-    repeticiones = fields.String()
+    ejercicioRutina = fields.Nested("EjercicioSchema", many=True)
 
 class ReporteGeneralSchema(Schema):
     persona = fields.Nested(PersonaSchema())
