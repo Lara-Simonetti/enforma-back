@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from .utilidad_reporte import UtilidadReporte
 import hashlib
+import json
+
 
 from modelos import \
     db, \
@@ -161,9 +163,13 @@ class VistaRutina(Resource):
         rutina.descripcion = request.json["descripcion"]
         rutina.duracion_minutos = float(request.json["duracion_minutos"])
         rutina.entrenamientos = request.json["entrenamientos"]
-        rutina.ejercicioRutina = request.json["ejercicioRutina"]
-        db.session.commit()
-        return ejercicio_schema.dump(rutina)
+        lista_rutinas = []
+        for item in request.json["ejercicioRutina"]:
+            ejercicio = Ejercicio.query.get_or_404(item['id'])
+            lista_rutinas.append(ejercicio)
+        rutina.ejercicioRutina = lista_rutinas
+        db.session.commit() 
+        return rutina_schema.dump(rutina)
 
 class VistaEjercicios(Resource):
     @jwt_required()
