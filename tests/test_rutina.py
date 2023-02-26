@@ -85,3 +85,52 @@ class TestRutinaTestCase(TestCase):
         self.assertEqual(datos_respuesta['descripcion'], rutina.descripcion)
         self.assertEqual(float(datos_respuesta['duracion_minutos']), float(rutina.duracion_minutos))
         self.assertIsNotNone(datos_respuesta['id'])
+
+    def test_crear_rutina_con_ejercicio(self):
+        #Crear los datos de la rutina
+        nombre_nueva_rutina = self.data_factory.sentence()
+        descripcion_nueva_rutina = self.data_factory.sentence()
+        minutos_nueva_rutina = random.randint(10,90)
+                
+        #Crear los datos del ejercicio
+        nombre_ejercicio = self.data_factory.sentence()
+        descripcion_ejercicio = self.data_factory.sentence()
+        video_ejercicio = self.data_factory.sentence()
+        calorias_ejercicio = random.randint(200,700)
+
+        #Crear el json con el ejercicio a crear
+        nuevo_ejercicio = {
+            "nombre": nombre_ejercicio,
+            "descripcion": descripcion_ejercicio,
+            "video": video_ejercicio,
+            "calorias": calorias_ejercicio
+        }  
+
+        #Crear el json con la rutina a crear
+        nueva_rutina = {
+            "nombre": nombre_nueva_rutina,
+            "descripcion": descripcion_nueva_rutina,
+            "duracion_minutos": minutos_nueva_rutina,
+            "ejercicio_rutina":nuevo_ejercicio
+        }
+        
+        #Definir endpoint, encabezados y hacer el llamado
+        endpoint_rutinas = "/rutina"
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_nueva_rutina = self.client.post(endpoint_rutinas,
+                                                   data=json.dumps(nueva_rutina),
+                                                   headers=headers)                                         
+        
+        #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
+        datos_respuesta = json.loads(resultado_nueva_rutina.get_data())
+        rutina = Rutina.query.get(datos_respuesta['id'])
+        self.rutinas_creadas.append(rutina)
+                                                   
+        #Verificar que el llamado fue exitoso y que el objeto recibido tiene los datos iguales a los creados
+        self.assertEqual(resultado_nueva_rutina.status_code, 200)
+        self.assertEqual(datos_respuesta['nombre'], rutina.nombre)
+        self.assertEqual(datos_respuesta['descripcion'], rutina.descripcion)
+        self.assertEqual(float(datos_respuesta['duracion_minutos']), float(rutina.duracion_minutos))
+        self.assertIsNotNone(datos_respuesta['id'])
+        self.assertIsNotNone(datos_respuesta['ejercicioRutina'])
