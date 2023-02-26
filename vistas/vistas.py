@@ -12,13 +12,15 @@ from modelos import \
     Persona, PersonaSchema, \
     Entrenamiento, EntrenamientoSchema, \
     Usuario, UsuarioSchema, \
-    ReporteGeneralSchema, ReporteDetalladoSchema
+    ReporteGeneralSchema, ReporteDetalladoSchema, \
+    Rutina, RutinaSchema
 
 
 ejercicio_schema = EjercicioSchema()
 persona_schema = PersonaSchema()
 entrenamiento_schema = EntrenamientoSchema()
 usuario_schema = UsuarioSchema()
+rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
     
@@ -129,7 +131,22 @@ class VistaPersona(Resource):
         else:
             return 'La persona tiene entrenamientos asociados', 409
 
-        
+class VistaRutinas(Resource):
+    @jwt_required()
+    def get(self):
+        rutinas = Rutina.query.all()
+        return [rutina_schema.dump(rutina) for rutina in rutinas]
+    @jwt_required()
+    def post(self):
+        nueva_rutina = Rutina( \
+            nombre = request.json["nombre"], \
+            descripcion = request.json["descripcion"], \
+            duracion_minutos = float(request.json["duracion_minutos"]),
+        )
+        db.session.add(nueva_rutina)
+        db.session.commit()
+        return rutina_schema.dump(nueva_rutina)
+    
 class VistaEjercicios(Resource):
     @jwt_required()
     def get(self):
