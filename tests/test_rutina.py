@@ -9,7 +9,7 @@ from modelos import db, Usuario, Ejercicio
 from app import app
 
 
-class TestRutinaTestCase):
+class TestRutinaTestCase:
 
     def setUp(self):
         self.data_factory = Faker()
