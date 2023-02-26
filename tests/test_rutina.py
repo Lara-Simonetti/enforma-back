@@ -4,12 +4,12 @@ from unittest import TestCase
 
 from faker import Faker
 from faker.generator import random
-from modelos import db, Usuario, Ejercicio
+from modelos import db, Usuario, Rutina
 
 from app import app
 
 
-class TestRutinaTestCase:
+class TestRutinaTestCase(TestCase):
 
     def setUp(self):
         self.data_factory = Faker()
@@ -39,13 +39,13 @@ class TestRutinaTestCase:
         self.token = respuesta_login["token"]
         self.usuario_id = respuesta_login["id"]
         
-        self.ejercicios_creados = []
+        self.rutinas_creadas = []
         
     
     def tearDown(self):
-        for ejercicio_creado in self.ejercicios_creados:
-            ejercicio = Ejercicio.query.get(ejercicio_creado.id)
-            db.session.delete(ejercicio)
+        for rutina_creada in self.rutinas_creadas:
+            rutina = Rutina.query.get(rutina_creada.id)
+            db.session.delete(rutina)
             db.session.commit()
             
         usuario_login = Usuario.query.get(self.usuario_id)
@@ -66,19 +66,18 @@ class TestRutinaTestCase:
         }
         
         #Definir endpoint, encabezados y hacer el llamado
-        endpoint_rutinas = "/rutinas"
+        endpoint_rutinas = "/rutina"
         headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
         
         resultado_nueva_rutina = self.client.post(endpoint_rutinas,
                                                    data=json.dumps(nueva_rutina),
                                                    headers=headers)
+                 
                                                    
         #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
         datos_respuesta = json.loads(resultado_nueva_rutina.get_data())
-        rutina = Ejercicio.query.get(datos_respuesta['id'])
-        self.ejercicios_creados.append(rutina)
-
-        
+        rutina = Rutina.query.get(datos_respuesta['id'])
+        self.rutinas_creadas.append(rutina)
                                                    
         #Verificar que el llamado fue exitoso y que el objeto recibido tiene los datos iguales a los creados
         self.assertEqual(resultado_nueva_rutina.status_code, 200)
