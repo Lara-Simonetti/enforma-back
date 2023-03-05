@@ -14,7 +14,7 @@ class Ejercicio(db.Model):
     descripcion = db.Column(db.String(512))
     video = db.Column(db.String(512))
     calorias = db.Column(db.Numeric)
-    entrenamientos = db.relationship('Entrenamiento')
+    entrenamientos = db.relationship('EntrenamientoEjercicio')
     rutinas = db.relationship('Rutina', secondary='EjercicioRutina', back_populates="ejercicioRutina")
 
 class Persona(db.Model):
@@ -32,7 +32,8 @@ class Persona(db.Model):
     entrenando = db.Column(db.Boolean, default=True)
     razon = db.Column(db.String(512))
     terminado = db.Column(db.Date)
-    entrenamientos = db.relationship('Entrenamiento', cascade='all, delete, delete-orphan')
+    entrenamientos_ejercicio = db.relationship('EntrenamientoEjercicio', cascade='all, delete, delete-orphan')
+    entrenamientos_rutina = db.relationship('EntrenamientoRutina', cascade='all, delete, delete-orphan')
     usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'))
 
 
@@ -43,22 +44,29 @@ class Usuario(db.Model):
     personas = db.relationship('Persona', cascade='all, delete, delete-orphan')
 
 
-class Entrenamiento(db.Model):
+class EntrenamientoEjercicio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tiempo = db.Column(db.Time)
     repeticiones = db.Column(db.Numeric)
     fecha = db.Column(db.Date)
-    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
     ejercicio = db.Column(db.Integer, db.ForeignKey('ejercicio.id'))
     persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
-    
+
+
+class EntrenamientoRutina(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tiempo = db.Column(db.Time)
+    fecha = db.Column(db.Date)
+    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
+    persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
+
 
 class Rutina(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50))
     descripcion = db.Column(db.String(250))
     duracion_minutos = db.Column(db.String(250))
-    entrenamientos = db.relationship('Entrenamiento')
+    entrenamientos = db.relationship('EntrenamientoRutina')
     ejercicioRutina = db.relationship('Ejercicio', secondary='EjercicioRutina', back_populates="rutinas")
 
 class EjercicioSchema(SQLAlchemyAutoSchema):
@@ -119,12 +127,22 @@ class ReporteDetalladoSchema(Schema):
     calorias = fields.Float()
     
 
-class EntrenamientoSchema(SQLAlchemyAutoSchema):
+class EntrenamientoEjercicioSchema(SQLAlchemyAutoSchema):
     class Meta:
-        model = Entrenamiento
+        model = EntrenamientoEjercicio
         include_relationships = True
         include_fk = True
         load_instance = True
     
     id = fields.String()
     repeticiones = fields.String()
+
+
+class EntrenamientoRutinaShema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = EntrenamientoRutina
+        include_relationships = True
+        include_fk = True
+        load_instance = True
+
+    id = fields.String()
