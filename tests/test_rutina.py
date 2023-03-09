@@ -103,7 +103,9 @@ class TestRutinaTestCase(TestCase):
             "nombre": nombre_ejercicio,
             "descripcion": descripcion_ejercicio,
             "video": video_ejercicio,
-            "calorias": calorias_ejercicio
+            "calorias": calorias_ejercicio,
+            "duracionRutina": 0,
+            "repeticionesRutina": 0
         }  
 
         #Crear el json con la rutina a crear
