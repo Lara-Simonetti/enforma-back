@@ -16,6 +16,8 @@ class Ejercicio(db.Model):
     calorias = db.Column(db.Numeric)
     entrenamientos = db.relationship('EntrenamientoEjercicio')
     rutinas = db.relationship('Rutina', secondary='EjercicioRutina', back_populates="ejercicioRutina")
+    duracionRutina = db.Column(db.Numeric, default=0)
+    repeticionesRutina = db.Column(db.Numeric, default=0)
 
 class Persona(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -78,6 +80,9 @@ class EjercicioSchema(SQLAlchemyAutoSchema):
         
     id = fields.String()
     calorias = fields.String()
+    duracionRutina = fields.String()
+    repeticionesRutina = fields.String()
+
 
 class PersonaSchema(SQLAlchemyAutoSchema):
     class Meta:
