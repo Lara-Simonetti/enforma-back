@@ -104,8 +104,8 @@ class TestRutinaTestCase(TestCase):
             "descripcion": descripcion_ejercicio,
             "video": video_ejercicio,
             "calorias": calorias_ejercicio,
-            "duracionRutina": 0,
-            "repeticionesRutina": 0
+            "duracionRutina": random.randint(0, 120),
+            "repeticionesRutina": random.randint(0, 5)
         }  
 
         #Crear el json con la rutina a crear

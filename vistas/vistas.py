@@ -167,10 +167,6 @@ class VistaRutina(Resource):
         lista_rutinas = []
         for item in request.json["ejercicioRutina"]:
             ejercicio = Ejercicio.query.get_or_404(item['id'])
-            if ejercicio.duracionRutina == None:
-                ejercicio.duracionRutina = 0
-            if ejercicio.repeticionesRutina == None:
-                ejercicio.repeticionesRutina = 0
             lista_rutinas.append(ejercicio)
         rutina.ejercicioRutina = lista_rutinas
         db.session.commit() 
