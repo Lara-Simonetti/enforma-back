@@ -65,7 +65,7 @@ class EntrenamientoRutina(db.Model):
 
 class Rutina(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50))
+    nombre = db.Column(db.String(50), unique=True)
     descripcion = db.Column(db.String(250))
     duracion_minutos = db.Column(db.String(250))
     entrenamientos = db.relationship('EntrenamientoRutina')
