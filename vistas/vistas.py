@@ -5,20 +5,26 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from .utilidad_reporte import UtilidadReporte
 import hashlib
+import json
+
 
 from modelos import \
     db, \
     Ejercicio, EjercicioSchema, \
     Persona, PersonaSchema, \
-    Entrenamiento, EntrenamientoSchema, \
+    EntrenamientoEjercicio, EntrenamientoEjercicioSchema, \
+    EntrenamientoRutina, EntrenamientoRutinaShema, \
     Usuario, UsuarioSchema, \
-    ReporteGeneralSchema, ReporteDetalladoSchema
+    ReporteGeneralSchema, ReporteDetalladoSchema, \
+    Rutina, RutinaSchema
 
 
 ejercicio_schema = EjercicioSchema()
 persona_schema = PersonaSchema()
-entrenamiento_schema = EntrenamientoSchema()
+entrenamiento_ejercicio_schema = EntrenamientoEjercicioSchema()
+entrenamiento_rutina_schema = EntrenamientoRutinaShema()
 usuario_schema = UsuarioSchema()
+rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
     
@@ -122,14 +128,50 @@ class VistaPersona(Resource):
     @jwt_required()
     def delete(self, id_persona):
         persona = Persona.query.get_or_404(id_persona)
-        if not persona.entrenamientos:
+        if not persona.entrenamientos_ejercicio:
             db.session.delete(persona)
             db.session.commit()
             return '', 204
         else:
             return 'La persona tiene entrenamientos asociados', 409
 
+class VistaRutinas(Resource):
+    @jwt_required()
+    def get(self):
+        rutinas = Rutina.query.all()
+        return [rutina_schema.dump(rutina) for rutina in rutinas]
+    
+    @jwt_required()
+    def post(self):
+        nueva_rutina = Rutina( \
+            nombre = request.json["nombre"], \
+            descripcion = request.json["descripcion"], \
+            duracion_minutos = float(request.json["duracion_minutos"])
+            )
+        db.session.add(nueva_rutina)
+        db.session.commit()
+        return rutina_schema.dump(nueva_rutina)
+    
+
+class VistaRutina(Resource):
+    @jwt_required()
+    def get(self, id_rutina):
+        return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
         
+    @jwt_required()
+    def put(self, id_rutina):
+        rutina = Rutina.query.get_or_404(id_rutina)
+        rutina.nombre = request.json["nombre"]
+        rutina.descripcion = request.json["descripcion"]
+        rutina.duracion_minutos = float(request.json["duracion_minutos"])
+        lista_rutinas = []
+        for item in request.json["ejercicioRutina"]:
+            ejercicio = Ejercicio.query.get_or_404(item['id'])
+            lista_rutinas.append(ejercicio)
+        rutina.ejercicioRutina = lista_rutinas
+        db.session.commit() 
+        return rutina_schema.dump(rutina)
+
 class VistaEjercicios(Resource):
     @jwt_required()
     def get(self):
@@ -175,15 +217,15 @@ class VistaEjercicio(Resource):
             return 'El ejercicio tiene entrenamientos asociados', 409
 
 
-class VistaEntrenamientos(Resource):
+class VistaEntrenamientoEjercicios(Resource):
     @jwt_required()
     def get(self, id_persona):
         persona = Persona.query.get_or_404(id_persona)
         entrenamiento_array = []
         
-        for entrenamiento in persona.entrenamientos:
+        for entrenamiento in persona.entrenamientos_ejercicio:
             ejercicio = Ejercicio.query.get_or_404(entrenamiento.ejercicio)
-            entrenamiento_schema_dump = entrenamiento_schema.dump(entrenamiento)
+            entrenamiento_schema_dump = entrenamiento_ejercicio_schema.dump(entrenamiento)
             entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(ejercicio)
             entrenamiento_array.append(entrenamiento_schema_dump)
         return [entrenamiento for entrenamiento in entrenamiento_array]
@@ -192,7 +234,7 @@ class VistaEntrenamientos(Resource):
     @jwt_required()
     def post(self, id_persona):
         print(datetime.strptime(request.json["fecha"], '%Y-%m-%d'))
-        nuevo_entrenamiento = Entrenamiento( \
+        nuevo_entrenamiento = EntrenamientoEjercicio( \
             tiempo = datetime.strptime(request.json["tiempo"], '%H:%M:%S').time(), \
             repeticiones = float(request.json["repeticiones"]), \
             fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date(), \
@@ -201,31 +243,83 @@ class VistaEntrenamientos(Resource):
         )
         db.session.add(nuevo_entrenamiento)
         db.session.commit()
-        return ejercicio_schema.dump(nuevo_entrenamiento)
+        return entrenamiento_ejercicio_schema.dump(nuevo_entrenamiento)
 
 
-class VistaEntrenamiento(Resource):
+class VistaEntrenamientoEjercicio(Resource):
     @jwt_required()
     def get(self, id_entrenamiento):
-        return entrenamiento_schema.dump(Entrenamiento.query.get_or_404(id_entrenamiento))
+        return entrenamiento_ejercicio_schema.dump(EntrenamientoEjercicio.query.get_or_404(id_entrenamiento))
         
     @jwt_required()
     def put(self, id_entrenamiento):
-        entrenamiento = Entrenamiento.query.get_or_404(id_entrenamiento)
+        entrenamiento = EntrenamientoEjercicio.query.get_or_404(id_entrenamiento)
         entrenamiento.tiempo = datetime.strptime(request.json["tiempo"], '%H:%M:%S').time()
         entrenamiento.repeticiones = float(request.json["repeticiones"])
         entrenamiento.fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date()
         entrenamiento.ejercicio = request.json["ejercicio"]
         entrenamiento.persona = request.json["persona"]
         db.session.commit()
-        return entrenamiento_schema.dump(entrenamiento)
+        return entrenamiento_ejercicio_schema.dump(entrenamiento)
 
     @jwt_required()
     def delete(self, id_entrenamiento):
-        entrenamiento = Entrenamiento.query.get_or_404(id_entrenamiento)
+        entrenamiento = EntrenamientoEjercicio.query.get_or_404(id_entrenamiento)
         db.session.delete(entrenamiento)
         db.session.commit()
         return '', 204
+
+
+class VistaEntrenamientoRutinas(Resource):
+    @jwt_required()
+    def get(self, id_persona):
+        persona = Persona.query.get_or_404(id_persona)
+        entrenamiento_array = []
+        
+        for entrenamiento in persona.entrenamientos_rutina:
+            rutina = Rutina.query.get_or_404(entrenamiento.rutina)
+            entrenamiento_schema_dump = entrenamiento_rutina_schema.dump(entrenamiento)
+            entrenamiento_schema_dump['rutina'] = rutina_schema.dump(rutina)
+            entrenamiento_array.append(entrenamiento_schema_dump)
+        return [entrenamiento for entrenamiento in entrenamiento_array]
+
+
+    @jwt_required()
+    def post(self, id_persona):
+        print(datetime.strptime(request.json["fecha"], '%Y-%m-%d'))
+        nuevo_entrenamiento = EntrenamientoRutina( \
+            tiempo = datetime.strptime(request.json["tiempo"], '%H:%M:%S').time(), \
+            fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date(), \
+            rutina = request.json["rutina"], \
+            persona = id_persona
+        )
+        db.session.add(nuevo_entrenamiento)
+        db.session.commit()
+        return entrenamiento_rutina_schema.dump(nuevo_entrenamiento)
+
+
+class VistaEntrenamientoRutina(Resource):
+    @jwt_required()
+    def get(self, id_entrenamiento):
+        return entrenamiento_rutina_schema.dump(EntrenamientoRutina.query.get_or_404(id_entrenamiento))
+        
+    @jwt_required()
+    def put(self, id_entrenamiento):
+        entrenamiento = EntrenamientoRutina.query.get_or_404(id_entrenamiento)
+        entrenamiento.tiempo = datetime.strptime(request.json["tiempo"], '%H:%M:%S').time()
+        entrenamiento.fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date()
+        entrenamiento.rutina = request.json["rutina"]
+        entrenamiento.persona = request.json["persona"]
+        db.session.commit()
+        return entrenamiento_rutina_schema.dump(entrenamiento)
+
+    @jwt_required()
+    def delete(self, id_entrenamiento):
+        entrenamiento = EntrenamientoRutina.query.get_or_404(id_entrenamiento)
+        db.session.delete(entrenamiento)
+        db.session.commit()
+        return '', 204
+
 
 
 class VistaReporte(Resource):

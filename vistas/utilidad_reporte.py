@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from modelos import \
     db, \
     Ejercicio, \
-    Entrenamiento
+    EntrenamientoEjercicio
     
 class UtilidadReporte:
     def calcular_imc(self, talla, peso):

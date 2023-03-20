@@ -4,14 +4,20 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 db = SQLAlchemy()
 
+EjercicioRutina = db.Table("EjercicioRutina",\
+    db.Column("rutina_id", db.Integer, db.ForeignKey('rutina.id'), primary_key = True),\
+    db.Column("ejercicio_id", db.Integer, db.ForeignKey('ejercicio.id'), primary_key = True))
+
 class Ejercicio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(128))
     descripcion = db.Column(db.String(512))
     video = db.Column(db.String(512))
     calorias = db.Column(db.Numeric)
-    entrenamientos = db.relationship('Entrenamiento')
-
+    entrenamientos = db.relationship('EntrenamientoEjercicio')
+    rutinas = db.relationship('Rutina', secondary='EjercicioRutina', back_populates="ejercicioRutina")
+    duracionRutina = db.Column(db.Numeric, default=0)
+    repeticionesRutina = db.Column(db.Numeric, default=0)
 
 class Persona(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,7 +34,8 @@ class Persona(db.Model):
     entrenando = db.Column(db.Boolean, default=True)
     razon = db.Column(db.String(512))
     terminado = db.Column(db.Date)
-    entrenamientos = db.relationship('Entrenamiento', cascade='all, delete, delete-orphan')
+    entrenamientos_ejercicio = db.relationship('EntrenamientoEjercicio', cascade='all, delete, delete-orphan')
+    entrenamientos_rutina = db.relationship('EntrenamientoRutina', cascade='all, delete, delete-orphan')
     usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'))
 
 
@@ -39,7 +46,7 @@ class Usuario(db.Model):
     personas = db.relationship('Persona', cascade='all, delete, delete-orphan')
 
 
-class Entrenamiento(db.Model):
+class EntrenamientoEjercicio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tiempo = db.Column(db.Time)
     repeticiones = db.Column(db.Numeric)
@@ -47,6 +54,22 @@ class Entrenamiento(db.Model):
     ejercicio = db.Column(db.Integer, db.ForeignKey('ejercicio.id'))
     persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
 
+
+class EntrenamientoRutina(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tiempo = db.Column(db.Time)
+    fecha = db.Column(db.Date)
+    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
+    persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
+
+
+class Rutina(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), unique=True)
+    descripcion = db.Column(db.String(250))
+    duracion_minutos = db.Column(db.String(250))
+    entrenamientos = db.relationship('EntrenamientoRutina')
+    ejercicioRutina = db.relationship('Ejercicio', secondary='EjercicioRutina', back_populates="rutinas")
 
 class EjercicioSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -57,6 +80,9 @@ class EjercicioSchema(SQLAlchemyAutoSchema):
         
     id = fields.String()
     calorias = fields.String()
+    duracionRutina = fields.String()
+    repeticionesRutina = fields.String()
+
 
 class PersonaSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -83,6 +109,17 @@ class UsuarioSchema(SQLAlchemyAutoSchema):
         
     id = fields.String()
         
+class RutinaSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Rutina
+        include_relationships = True
+        load_instance = True
+        
+    id = fields.String()
+    nombre = fields.String()
+    descripcion = fields.String()
+    duracion_minutos = fields.String()
+    ejercicioRutina = fields.Nested("EjercicioSchema", many=True)
 
 class ReporteGeneralSchema(Schema):
     persona = fields.Nested(PersonaSchema())
@@ -95,12 +132,22 @@ class ReporteDetalladoSchema(Schema):
     calorias = fields.Float()
     
 
-class EntrenamientoSchema(SQLAlchemyAutoSchema):
+class EntrenamientoEjercicioSchema(SQLAlchemyAutoSchema):
     class Meta:
-        model = Entrenamiento
+        model = EntrenamientoEjercicio
         include_relationships = True
         include_fk = True
         load_instance = True
     
     id = fields.String()
     repeticiones = fields.String()
+
+
+class EntrenamientoRutinaShema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = EntrenamientoRutina
+        include_relationships = True
+        include_fk = True
+        load_instance = True
+
+    id = fields.String()
